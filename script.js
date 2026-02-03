@@ -1,5 +1,8 @@
 // Variável global para armazenar os dados do PGC
 let dadosPGC = [];
+let contaParaExcluir = null;
+let contaParaEditar = null;
+let isEditMode = false;
 
 // Função principal para renderizar os dados do PGC
 function renderPGC(data) {
@@ -271,7 +274,7 @@ function adicionarEventListeners() {
             const conta = dadosPGC.find(c => c.CODIGO === codigo);
             
             if (conta) {
-                alert(`Editar conta:\nCódigo: ${conta.CODIGO}\nNome: ${conta.CONTA}\nClasse: ${conta.CLASSE}\nAcesso: ${conta.ACESSO === 'C' ? 'Crédito' : 'Débito'}\n\nEsta funcionalidade abriria um formulário de edição.`);
+                abrirEditDialog(conta);
             }
         });
     });
@@ -282,11 +285,210 @@ function adicionarEventListeners() {
             const codigo = this.getAttribute('data-id');
             const conta = dadosPGC.find(c => c.CODIGO === codigo);
             
-            if (conta && confirm(`Tem certeza que deseja excluir a conta:\n\n${conta.CONTA}\nCódigo: ${conta.CODIGO}\nClasse: ${conta.CLASSE}\n\nEsta ação não pode ser desfeita.`)) {
-                alert(`Conta ${conta.CONTA} excluída com sucesso!\n\n(Esta é uma demonstração - em um sistema real, a conta seria removida do banco de dados.)`);
+            if (conta) {
+                abrirDeleteDialog(conta);
             }
         });
     });
+}
+
+// Função para abrir diálogo de exclusão
+function abrirDeleteDialog(conta) {
+    contaParaExcluir = conta;
+    
+    // Atualizar a mensagem do diálogo
+    document.getElementById('deleteMessage').innerHTML = 
+        `Tem certeza que deseja eliminar a conta <strong>${conta.CONTA}</strong> (Código: ${conta.CODIGO}) do PGC-NIRF?`;
+    
+    // Mostrar o diálogo
+    document.getElementById('deleteDialog').style.display = 'flex';
+}
+
+// Função para fechar diálogo de exclusão
+function fecharDeleteDialog() {
+    document.getElementById('deleteDialog').style.display = 'none';
+    contaParaExcluir = null;
+}
+
+// Função para confirmar exclusão
+function confirmarExclusao() {
+    if (!contaParaExcluir) return;
+    
+    // Encontrar o índice da conta no array
+    const index = dadosPGC.findIndex(c => c.CODIGO === contaParaExcluir.CODIGO);
+    
+    if (index !== -1) {
+        // Remover a conta do array
+        dadosPGC.splice(index, 1);
+        
+        // Atualizar a visualização
+        const classes = agruparPorClasse(dadosPGC);
+        renderizarClasses(classes);
+        
+        // Fechar o diálogo
+        fecharDeleteDialog();
+        
+        // Mostrar mensagem de sucesso
+        alert(`Conta ${contaParaExcluir.CONTA} excluída com sucesso!`);
+    }
+}
+
+// Função para abrir diálogo de edição
+function abrirEditDialog(conta) {
+    contaParaEditar = conta;
+    isEditMode = true;
+    
+    // Configurar o título do diálogo
+    document.getElementById('editDialogTitle').textContent = 'Editar Conta';
+    
+    // Preencher os campos
+    document.getElementById('editCodigo').value = conta.CODIGO;
+    
+    // Extrair apenas a parte do código da conta (ex: "1.2.1.1-" de "1.2.1.1-Banco de Moçambique")
+    const partesConta = conta.CONTA.split('-');
+    const codigoParte = partesConta[0] + '-';
+    document.getElementById('editConta').value = codigoParte;
+    
+    // Limpar mensagens de erro
+    document.getElementById('editDialogErrors').style.display = 'none';
+    document.getElementById('editDialogErrors').textContent = '';
+    
+    // Mostrar o diálogo
+    document.getElementById('editDialog').style.display = 'flex';
+}
+
+// Função para fechar diálogo de edição
+function fecharEditDialog() {
+    document.getElementById('editDialog').style.display = 'none';
+    contaParaEditar = null;
+    isEditMode = false;
+    
+    // Limpar campos
+    document.getElementById('editCodigo').value = '';
+    document.getElementById('editConta').value = '';
+    document.getElementById('editDialogErrors').style.display = 'none';
+    document.getElementById('editDialogErrors').textContent = '';
+}
+
+// Função para validar o formato do código e conta
+function validarFormato(codigo, conta) {
+    const errors = [];
+    
+    // Validar código (deve conter apenas números)
+    if (!/^\d+$/.test(codigo)) {
+        errors.push('O código deve conter apenas números.');
+    }
+    
+    // Validar formato da conta (deve seguir o padrão: código-nome)
+    if (!conta.includes('-')) {
+        errors.push('A conta deve estar no formato: código-nome (ex: 1.2.1.1-StandardBank)');
+    }
+    
+    // Verificar se a parte do código na conta corresponde ao código informado
+    const codigoDaConta = conta.split('-')[0];
+    const codigoFormatado = codigoDaConta.replace(/\./g, '');
+    
+    if (codigoFormatado !== codigo) {
+        errors.push('O código na conta não corresponde ao código informado.');
+    }
+    
+    return errors;
+}
+
+// Função para verificar se código ou conta já existem
+function verificarExistencia(codigo, conta, codigoOriginal) {
+    const errors = [];
+    
+    // Verificar se o código já existe (exceto se for a mesma conta sendo editada)
+    const codigoExistente = dadosPGC.find(c => c.CODIGO === codigo && c.CODIGO !== codigoOriginal);
+    if (codigoExistente) {
+        errors.push(`O código ${codigo} já existe na conta: ${codigoExistente.CONTA}`);
+    }
+    
+    // Verificar se a conta já existe (exceto se for a mesma conta sendo editada)
+    const contaExistente = dadosPGC.find(c => c.CONTA === conta && c.CODIGO !== codigoOriginal);
+    if (contaExistente) {
+        errors.push(`A conta "${conta}" já existe com código: ${contaExistente.CODIGO}`);
+    }
+    
+    return errors;
+}
+
+// Função para salvar conta (editar ou adicionar)
+function salvarConta() {
+    const codigo = document.getElementById('editCodigo').value.trim();
+    const conta = document.getElementById('editConta').value.trim();
+    
+    // Validar campos obrigatórios
+    if (!codigo || !conta) {
+        mostrarErro('Todos os campos são obrigatórios.');
+        return;
+    }
+    
+    // Validar formato
+    const errosFormato = validarFormato(codigo, conta);
+    if (errosFormato.length > 0) {
+        mostrarErro(errosFormato.join(' '));
+        return;
+    }
+    
+    // Verificar se já existe
+    const codigoOriginal = isEditMode ? contaParaEditar.CODIGO : null;
+    const errosExistencia = verificarExistencia(codigo, conta, codigoOriginal);
+    if (errosExistencia.length > 0) {
+        mostrarErro(errosExistencia.join(' '));
+        return;
+    }
+    
+    if (isEditMode && contaParaEditar) {
+        // Modo edição: atualizar conta existente
+        const index = dadosPGC.findIndex(c => c.CODIGO === contaParaEditar.CODIGO);
+        if (index !== -1) {
+            dadosPGC[index] = {
+                NIVEL: contaParaEditar.NIVEL,
+                ACESSO: contaParaEditar.ACESSO,
+                CLASSE: contaParaEditar.CLASSE,
+                CONTA: conta,
+                CONTAMAE: contaParaEditar.CONTAMAE,
+                CODIGO: codigo,
+                GRAU: contaParaEditar.GRAU,
+                CODIGOMAE: contaParaEditar.CODIGOMAE
+            };
+        }
+    } else {
+        // Modo adição: criar nova conta
+        // Aqui você precisaria determinar a classe, nível, grau, etc.
+        // Como exemplo, vou usar valores padrão
+        const novaConta = {
+            NIVEL: "1", // Você pode ajustar conforme necessário
+            ACESSO: "C", // Padrão para contas editáveis
+            CLASSE: codigo.charAt(0), // A classe é o primeiro dígito do código
+            CONTA: conta,
+            CONTAMAE: conta, // Neste exemplo, a conta mãe é ela mesma
+            CODIGO: codigo,
+            GRAU: "3+", // Você pode ajustar conforme necessário
+            CODIGOMAE: codigo // Neste exemplo, o código mãe é o próprio código
+        };
+        
+        dadosPGC.push(novaConta);
+    }
+    
+    // Atualizar a visualização
+    const classes = agruparPorClasse(dadosPGC);
+    renderizarClasses(classes);
+    
+    // Fechar o diálogo
+    fecharEditDialog();
+    
+    // Mostrar mensagem de sucesso
+    alert(`Conta ${conta} ${isEditMode ? 'atualizada' : 'adicionada'} com sucesso!`);
+}
+
+// Função para mostrar erros no diálogo
+function mostrarErro(mensagem) {
+    const errorDiv = document.getElementById('editDialogErrors');
+    errorDiv.textContent = mensagem;
+    errorDiv.style.display = 'block';
 }
 
 // Função de filtro

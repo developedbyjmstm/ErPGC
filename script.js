@@ -23,7 +23,7 @@ function renderPGC(data) {
 
 // Função para agrupar contas por classe
 // Função para agrupar contas por conta mãe dentro de cada classe
-function agruparPorContaMae(contas) {
+function agruparPorClasse(contas) {
     const grupos = {};
     
     // Primeiro, identificar as contas-mãe (grau 2)

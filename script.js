@@ -1,13 +1,13 @@
-fetch('pgc.json')
-.then(res => res.json())
-.then(data => renderPGC(data))
-.catch(err => console.error(err));
+ // Variável global para armazenar os dados do PGC
+        let dadosPGC = [];
 
-function renderPGC(data) {
-          // Inicializar a aplicação
-        document.addEventListener('DOMContentLoaded', function() {
+        // Função principal para renderizar os dados do PGC
+        function renderPGC(data) {
+            // Armazenar os dados na variável global
+            dadosPGC = data;
+            
             // Agrupar e renderizar as classes
-            const classes = agruparPorClasse(data);
+            const classes = agruparPorClasse(dadosPGC);
             renderizarClasses(classes);
             
             // Adicionar event listener para o campo de filtro
@@ -19,13 +19,9 @@ function renderPGC(data) {
                     aplicarFiltro();
                 }
             });
-        });
-}
+        }
 
-
-
-
-// Função para agrupar contas por classe
+        // Função para agrupar contas por classe
         function agruparPorClasse(contas) {
             const classes = {};
             
@@ -153,7 +149,7 @@ function renderPGC(data) {
             document.querySelectorAll('.btn-edit').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const codigo = this.getAttribute('data-id');
-                    const conta = planoContas.find(c => c.CODIGO === codigo);
+                    const conta = dadosPGC.find(c => c.CODIGO === codigo);
                     
                     if (conta) {
                         alert(`Editar conta:\nCódigo: ${conta.CODIGO}\nNome: ${conta.CONTA}\nClasse: ${conta.CLASSE}\n\nEsta funcionalidade abriria um formulário de edição.`);
@@ -165,7 +161,7 @@ function renderPGC(data) {
             document.querySelectorAll('.btn-delete').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const codigo = this.getAttribute('data-id');
-                    const conta = planoContas.find(c => c.CODIGO === codigo);
+                    const conta = dadosPGC.find(c => c.CODIGO === codigo);
                     
                     if (conta && confirm(`Tem certeza que deseja excluir a conta:\n\n${conta.CONTA}\nCódigo: ${conta.CODIGO}\n\nEsta ação não pode ser desfeita.`)) {
                         alert(`Conta ${conta.CONTA} excluída com sucesso!\n\n(Esta é uma demonstração - em um sistema real, a conta seria removida do banco de dados.)`);
@@ -180,13 +176,13 @@ function renderPGC(data) {
             
             if (!filtro.trim()) {
                 // Se o filtro estiver vazio, mostrar todas as classes
-                const classes = agruparPorClasse(planoContas);
+                const classes = agruparPorClasse(dadosPGC);
                 renderizarClasses(classes);
                 return;
             }
             
             // Filtrar contas
-            const contasFiltradas = planoContas.filter(conta => {
+            const contasFiltradas = dadosPGC.filter(conta => {
                 return (
                     conta.CONTA.toLowerCase().includes(filtro) ||
                     conta.CODIGO.toLowerCase().includes(filtro) ||
@@ -213,3 +209,17 @@ function renderPGC(data) {
             renderizarClasses(classes);
         }
 
+        // Carregar os dados do arquivo JSON
+        fetch('pgc.json')
+            .then(res => res.json())
+            .then(data => renderPGC(data))
+            .catch(err => {
+                console.error('Erro ao carregar o arquivo JSON:', err);
+                document.getElementById('classesContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Erro ao carregar dados</h3>
+                        <p>Não foi possível carregar o arquivo pgc.json. Verifique se o arquivo existe e está no formato correto.</p>
+                        <p>Erro: ${err.message}</p>
+                    </div>
+                `;
+            });

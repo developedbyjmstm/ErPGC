@@ -155,10 +155,10 @@ function renderizarClasses(classes) {
             // Determinar texto e classe do badge
             let acessoDesc, acessoClasse;
             if (item.conta.ACESSO === 'CC' || item.conta.ACESSO === 'C') {
-                acessoDesc = 'Crédito';
+                acessoDesc = '°';
                 acessoClasse = 'C';
             } else if (item.conta.ACESSO === 'N') {
-                acessoDesc = 'Débito';
+                acessoDesc = '•';
                 acessoClasse = 'N';
             } else {
                 acessoDesc = item.conta.ACESSO;

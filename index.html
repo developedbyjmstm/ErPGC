@@ -6,12 +6,25 @@
   </head>
   <body>
       
-      
-      <div id="output"></div>
-      
-      
-      
-      
+  <div class="container">
+        <header>
+            <h1>Plano de Contas Contábeis</h1>
+            <p class="description">Sistema de visualização e gerenciamento do plano de contas organizado por classes</p>
+        </header>
+
+        <div class="filter-container">
+            <input type="text" id="filterInput" class="filter-input" placeholder="Filtrar por nome da conta, código ou classe...">
+        </div>
+
+        <div id="classesContainer">
+            <!-- As classes serão inseridas aqui via JavaScript -->
+        </div>
+
+        <footer>
+            <p>Plano de Contas - Total de classes: <span id="totalClasses">0</span> | Total de contas: <span id="totalContas">0</span></p>
+            <p>Sistema desenvolvido para gestão contábil</p>
+        </footer>
+  </div>
       
       
       <script src="script.js"></script>

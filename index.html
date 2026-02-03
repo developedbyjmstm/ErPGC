@@ -25,6 +25,51 @@
             <p>Sistema desenvolvido para gestão contábil</p>
         </footer>
   </div>
+
+
+    <!-- Diálogo de Confirmação para Excluir -->
+<div id="deleteDialog" class="dialog-overlay" style="display: none;">
+    <div class="dialog-container">
+        <div class="dialog-header">
+            <h3>Confirmar Exclusão</h3>
+            <button class="dialog-close" onclick="fecharDeleteDialog()">×</button>
+        </div>
+        <div class="dialog-body">
+            <p id="deleteMessage">Tem certeza que deseja eliminar a conta <strong></strong> do PGC-NIRF?</p>
+        </div>
+        <div class="dialog-footer">
+            <button class="btn btn-cancel" onclick="fecharDeleteDialog()">Não</button>
+            <button class="btn btn-confirm" onclick="confirmarExclusao()">Sim</button>
+        </div>
+    </div>
+</div>
+
+<!-- Diálogo para Editar/Adicionar Conta -->
+<div id="editDialog" class="dialog-overlay" style="display: none;">
+    <div class="dialog-container">
+        <div class="dialog-header">
+            <h3 id="editDialogTitle">Editar Conta</h3>
+            <button class="dialog-close" onclick="fecharEditDialog()">×</button>
+        </div>
+        <div class="dialog-body">
+            <div class="form-group">
+                <label for="editCodigo">Código:</label>
+                <input type="text" id="editCodigo" class="form-input" placeholder="Ex: 1211">
+                <small class="form-hint">Código da conta (numérico)</small>
+            </div>
+            <div class="form-group">
+                <label for="editConta">Conta:</label>
+                <input type="text" id="editConta" class="form-input" placeholder="Ex: 1.2.1.1-StandardBank">
+                <small class="form-hint">Nome da conta no formato: código-nome</small>
+            </div>
+            <div id="editDialogErrors" class="error-message" style="display: none;"></div>
+        </div>
+        <div class="dialog-footer">
+            <button class="btn btn-cancel" onclick="fecharEditDialog()">Cancelar</button>
+            <button class="btn btn-save" onclick="salvarConta()">Salvar</button>
+        </div>
+    </div>
+</div>
       
       
       <script src="script.js"></script>

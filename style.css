@@ -373,3 +373,23 @@
 .btn-save:hover {
     background-color: #219653;
 }
+
+
+/* Estilo para indicar que a linha é clicável */
+.conta-item {
+    cursor: pointer;
+}
+
+/* Efeito visual para duplo clique/clique longo */
+.conta-item.clickable {
+    transition: all 0.2s ease;
+}
+
+.conta-item.clickable:hover {
+    background-color: #e8f4fd;
+}
+
+.conta-item.clickable:active {
+    background-color: #d4e9ff;
+    transform: scale(0.995);
+}

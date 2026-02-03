@@ -70,6 +70,60 @@
         </div>
     </div>
 </div>
+    <!-- Diálogo para Adicionar Nova Subconta -->
+<div id="addSubcontaDialog" class="dialog-overlay" style="display: none;">
+    <div class="dialog-container">
+        <div class="dialog-header">
+            <h3 id="addSubcontaDialogTitle">Adicionar Nova Subconta</h3>
+            <button class="dialog-close" onclick="fecharAddSubcontaDialog()">×</button>
+        </div>
+        <div class="dialog-body">
+            <div class="form-group">
+                <label for="addCodigo">Código:</label>
+                <input type="text" id="addCodigo" class="form-input" placeholder="Ex: 12111">
+                <small class="form-hint">Código da nova subconta (deve começar com o código da conta pai)</small>
+            </div>
+            <div class="form-group">
+                <label for="addConta">Conta:</label>
+                <input type="text" id="addConta" class="form-input" placeholder="Ex: 1.2.1.1.1-Nova Subconta">
+                <small class="form-hint">Nome da subconta no formato: código-nome</small>
+            </div>
+            <div class="form-group">
+                <label for="addNivel">Nível:</label>
+                <select id="addNivel" class="form-input">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <small class="form-hint">Nível hierárquico da subconta</small>
+            </div>
+            <div class="form-group">
+                <label for="addAcesso">Acesso:</label>
+                <select id="addAcesso" class="form-input">
+                    <option value="C">Crédito (C)</option>
+                    <option value="N">Débito (N)</option>
+                </select>
+                <small class="form-hint">Tipo de acesso da conta</small>
+            </div>
+            <div class="form-group">
+                <label for="addGrau">Grau:</label>
+                <select id="addGrau" class="form-input">
+                    <option value="2">2 (Conta-mãe)</option>
+                    <option value="3">3 (Conta-filha)</option>
+                    <option value="3+">3+ (Subconta detalhada)</option>
+                </select>
+                <small class="form-hint">Grau da conta no plano</small>
+            </div>
+            <div id="addDialogErrors" class="error-message" style="display: none;"></div>
+        </div>
+        <div class="dialog-footer">
+            <button class="btn btn-cancel" onclick="fecharAddSubcontaDialog()">Cancelar</button>
+            <button class="btn btn-save" onclick="adicionarSubconta()">Adicionar</button>
+        </div>
+    </div>
+</div>
       
       
       <script src="script.js"></script>

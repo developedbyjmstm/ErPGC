@@ -22,23 +22,59 @@ function renderPGC(data) {
 }
 
 // Função para agrupar contas por classe
-function agruparPorClasse(contas) {
-    const classes = {};
+// Função para agrupar contas por conta mãe dentro de cada classe
+function agruparPorContaMae(contas) {
+    const grupos = {};
     
-    contas.forEach(conta => {
-        const classe = conta.CLASSE;
-        if (!classes[classe]) {
-            classes[classe] = {
-                nome: `Classe ${classe}`,
-                contas: []
-            };
-        }
-        
-        // Adicionar a conta à classe correspondente
-        classes[classe].contas.push(conta);
+    // Primeiro, identificar as contas-mãe (grau 2)
+    const contasMae = contas.filter(conta => conta.GRAU === "2" && !conta.CONTA.startsWith('CLASSE'));
+    
+    // Ordenar contas-mãe pelo código
+    contasMae.sort((a, b) => parseInt(a.CODIGO) - parseInt(b.CODIGO));
+    
+    contasMae.forEach(contaMae => {
+        const codigoMae = contaMae.CODIGO;
+        grupos[codigoMae] = {
+            contaMae: contaMae,
+            contasFilhas: []
+        };
     });
     
-    return classes;
+    // Agora, adicionar as contas-filhas (grau 3+)
+    contas.forEach(conta => {
+        // Pular contas que são a própria classe
+        if (conta.CONTA.startsWith('CLASSE')) return;
+        
+        // Se não for conta-mãe (grau 2), é uma conta-filha
+        if (conta.GRAU !== "2") {
+            // Encontrar a conta mãe correspondente
+            const contaMae = contasMae.find(mae => 
+                conta.CODIGO.startsWith(mae.CODIGO) && 
+                conta.CODIGO !== mae.CODIGO &&
+                (conta.GRAU === "3" || conta.GRAU === "3+")
+            );
+            
+            if (contaMae) {
+                grupos[contaMae.CODIGO].contasFilhas.push(conta);
+            } else {
+                // Se não encontrar uma conta mãe específica, agrupar pelo CODIGOMAE
+                if (grupos[conta.CODIGOMAE]) {
+                    grupos[conta.CODIGOMAE].contasFilhas.push(conta);
+                }
+            }
+        }
+    });
+    
+    // Ordenar as contas filhas por código, mantendo a hierarquia
+    Object.keys(grupos).forEach(codigoMae => {
+        grupos[codigoMae].contasFilhas.sort((a, b) => {
+            // Comparação numérica, mas considerando a hierarquia
+            // Exemplo: 121 deve vir antes de 1211
+            return parseInt(a.CODIGO) - parseInt(b.CODIGO);
+        });
+    });
+    
+    return grupos;
 }
 
 // Função para agrupar contas por conta mãe dentro de cada classe

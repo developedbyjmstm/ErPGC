@@ -3,10 +3,7 @@ fetch('pgc.json')
     if (!res.ok) throw new Error('Erro ao carregar JSON: ' + res.status);
     return res.json();
   })
-  .then(data => {
-    console.log(data); // conferir no console os dados
-    renderData(data);
-  })
+  .then(data => renderData(data))
   .catch(err => {
     document.getElementById('output').textContent = 'Erro ao carregar dados.';
     console.error(err);
@@ -14,12 +11,22 @@ fetch('pgc.json')
 
 function renderData(data) {
   const output = document.getElementById('output');
+  
+  let html = '';
 
-  // Se for um objeto com propriedades
-  output.innerHTML = `
-    <p><strong>CONTAMAE:</strong> ${data.CONTAMAE ?? '-'}</p>
-    <p><strong>CODIGOMAE:</strong> ${data.CODIGOMAE ?? '-'}</p>
-    <p><strong>CONTA:</strong> ${data.CONTA ?? '-'}</p>
-    <p><strong>CODIGO:</strong> ${data.CODIGO ?? '-'}</p>
-  `;
+  data.forEach(item => {
+    html += `
+      <div class="card">
+        <p><strong>CLASSE:</strong> ${item.CLASSE}</p>
+        <p><strong>CONTA:</strong> ${item.CONTA}</p>
+        <p><strong>CONTAMAE:</strong> ${item.CONTAMAE}</p>
+        <p><strong>CODIGO:</strong> ${item.CODIGO}</p>
+        <p><strong>CODIGOMAE:</strong> ${item.CODIGOMAE}</p>
+        <p><strong>GRAU:</strong> ${item.GRAU}</p>
+      </div>
+      <hr>
+    `;
+  });
+
+  output.innerHTML = html;
 }

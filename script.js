@@ -10,9 +10,9 @@ function renderData(data) {
 
   // Se for um objeto simples
   output.innerHTML = `
-    <p><strong>CONTAMAE:</strong> ${CONTAMAE}</p>
+    <p><strong>CONTAMAE:</strong> ${data.CONTAMAE}</p>
     <p><strong>CODIGOMAE:</strong> ${data.CODIGOMAE}</p>
-    <p><strong>CONTA:</strong> ${CONTA.country}</p>
+    <p><strong>CONTA:</strong> ${data.CONTA}</p>
     <p><strong>CODIGO:</strong> ${data.CODIGO}</p>
   `;
 }

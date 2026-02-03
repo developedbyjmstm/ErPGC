@@ -41,59 +41,102 @@ function agruparPorClasse(contas) {
     return classes;
 }
 
-// Função para agrupar contas por conta mãe dentro de cada classe
-function agruparPorContaMae(contas) {
-    const grupos = {};
+// Função para construir a hierarquia de contas
+function construirHierarquia(contas) {
+    // Filtrar apenas contas que não são da própria classe
+    const contasDaClasse = contas.filter(c => !c.CONTA.startsWith('CLASSE'));
     
-    // Primeiro, identificar as contas-mãe (grau 2)
-    const contasMae = contas.filter(conta => conta.GRAU === "2" && !conta.CONTA.startsWith('CLASSE'));
+    // Ordenar contas por código para garantir ordem correta
+    contasDaClasse.sort((a, b) => {
+        // Comparação numérica dos códigos
+        return parseInt(a.CODIGO) - parseInt(b.CODIGO);
+    });
     
-    // Ordenar contas-mãe pelo código
-    contasMae.sort((a, b) => parseInt(a.CODIGO) - parseInt(b.CODIGO));
+    // Criar estrutura para agrupar contas por nível e hierarquia
+    const hierarquia = [];
+    
+    // Primeiro, adicionar as contas-mãe (grau 2)
+    const contasMae = contasDaClasse.filter(conta => conta.GRAU === "2");
     
     contasMae.forEach(contaMae => {
-        const codigoMae = contaMae.CODIGO;
-        grupos[codigoMae] = {
-            contaMae: contaMae,
-            contasFilhas: []
-        };
-    });
-    
-    // Agora, adicionar as contas-filhas (grau 3+)
-    contas.forEach(conta => {
-        // Pular contas que são a própria classe
-        if (conta.CONTA.startsWith('CLASSE')) return;
+        // Adicionar a conta-mãe
+        hierarquia.push({
+            conta: contaMae,
+            nivel: 0,
+            tipo: 'mae'
+        });
         
-        // Se não for conta-mãe (grau 2), é uma conta-filha
-        if (conta.GRAU !== "2") {
-            // Encontrar a conta mãe correspondente
-            const contaMae = contasMae.find(mae => 
-                conta.CODIGO.startsWith(mae.CODIGO) && 
-                conta.CODIGO !== mae.CODIGO &&
-                (conta.GRAU === "3" || conta.GRAU === "3+")
-            );
+        // Encontrar contas-filhas diretas desta conta-mãe
+        // São contas cujo código começa com o código da conta-mãe
+        // mas têm um código mais longo
+        const contasFilhas = contasDaClasse.filter(conta => {
+            // Verificar se o código começa com o código da conta-mãe
+            // mas não é a própria conta-mãe
+            if (conta.CODIGO === contaMae.CODIGO) return false;
             
-            if (contaMae) {
-                grupos[contaMae.CODIGO].contasFilhas.push(conta);
-            } else {
-                // Se não encontrar uma conta mãe específica, agrupar pelo CODIGOMAE
-                if (grupos[conta.CODIGOMAE]) {
-                    grupos[conta.CODIGOMAE].contasFilhas.push(conta);
+            // Verificar se é uma conta-filha direta
+            // O código da conta mãe deve ser um prefixo do código da conta
+            // E a diferença no comprimento deve ser de 1 dígito para filhos diretos
+            // ou mais para netos, etc.
+            if (conta.CODIGO.startsWith(contaMae.CODIGO)) {
+                // Para filhos diretos (1 nível abaixo), o código deve ter
+                // exatamente +1 dígito (ex: 11 -> 111)
+                if (conta.CODIGO.length === contaMae.CODIGO.length + 1) {
+                    return true;
                 }
+                // Para netos (2 níveis abaixo), exibir com recuo adicional
+                // ex: 11 -> 1121 (isso será tratado na renderização)
             }
-        }
-    });
-    
-    // Ordenar as contas filhas por código, mantendo a hierarquia
-    Object.keys(grupos).forEach(codigoMae => {
-        grupos[codigoMae].contasFilhas.sort((a, b) => {
-            // Comparação numérica, mas considerando a hierarquia
-            // Exemplo: 121 deve vir antes de 1211
-            return parseInt(a.CODIGO) - parseInt(b.CODIGO);
+            return false;
+        });
+        
+        // Ordenar contas-filhas por código
+        contasFilhas.sort((a, b) => parseInt(a.CODIGO) - parseInt(b.CODIGO));
+        
+        // Adicionar contas-filhas
+        contasFilhas.forEach(contaFilha => {
+            // Determinar o nível baseado no comprimento do código
+            const nivel = contaFilha.CODIGO.length - contaMae.CODIGO.length;
+            
+            hierarquia.push({
+                conta: contaFilha,
+                nivel: nivel,
+                tipo: 'filha',
+                contaMaeCodigo: contaMae.CODIGO
+            });
+            
+            // Agora encontrar subcontas (netos) desta conta-filha
+            const subContas = contasDaClasse.filter(conta => {
+                if (conta.CODIGO === contaFilha.CODIGO) return false;
+                
+                // Verificar se é uma subconta da conta-filha
+                if (conta.CODIGO.startsWith(contaFilha.CODIGO)) {
+                    // Deve ter pelo menos +1 dígito
+                    if (conta.CODIGO.length > contaFilha.CODIGO.length) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+            
+            // Ordenar subcontas por código
+            subContas.sort((a, b) => parseInt(a.CODIGO) - parseInt(b.CODIGO));
+            
+            // Adicionar subcontas
+            subContas.forEach(subConta => {
+                const subNivel = subConta.CODIGO.length - contaMae.CODIGO.length;
+                
+                hierarquia.push({
+                    conta: subConta,
+                    nivel: subNivel,
+                    tipo: 'subconta',
+                    contaMaeCodigo: contaFilha.CODIGO
+                });
+            });
         });
     });
     
-    return grupos;
+    return hierarquia;
 }
 
 // Função para renderizar as classes e contas de forma hierárquica
@@ -137,47 +180,61 @@ function renderizarClasses(classes) {
         const contasList = document.createElement('div');
         contasList.className = 'contas-list';
         
-        // Agrupar contas por conta mãe
-        const grupos = agruparPorContaMae(contasDaClasse);
+        // Construir hierarquia para esta classe
+        const hierarquia = construirHierarquia(classe.contas);
         
-        // Ordenar grupos pelo código da conta mãe
-        const codigosMaeOrdenados = Object.keys(grupos).sort((a, b) => parseInt(a) - parseInt(b));
-        
-        // Renderizar cada grupo (conta-mãe + contas-filhas)
-        codigosMaeOrdenados.forEach(codigoMae => {
-            const grupo = grupos[codigoMae];
+        // Renderizar a hierarquia
+        hierarquia.forEach(item => {
+            const contaItem = document.createElement('div');
+            contaItem.className = 'conta-item';
             
-            // Renderizar conta-mãe
-            const contaMaeItem = document.createElement('div');
-            contaMaeItem.className = 'conta-item';
+            // Calcular recuo baseado no nível
+            const recuo = item.nivel * 30; // 30px por nível
+            contaItem.style.paddingLeft = `${15 + recuo}px`;
             
-            // Determinar se mostra botões para conta-mãe (só se ACESSO = "C")
-            const mostrarBotoesMae = grupo.contaMae.ACESSO === 'C';
-            const acessoDescMae = grupo.contaMae.ACESSO === 'C' ? 'Crédito' : 'Débito';
+            // Adicionar borda esquerda para níveis mais profundos
+            if (item.nivel > 0) {
+                contaItem.style.borderLeft = '2px solid #e0e0e0';
+                contaItem.style.marginLeft = '10px';
+            }
             
-            contaMaeItem.innerHTML = `
+            // Determinar se mostra botões (só se ACESSO = "C")
+            const mostrarBotoes = item.conta.ACESSO === 'C';
+            const acessoDesc = item.conta.ACESSO === 'C' ? 'Crédito' : 'Débito';
+            
+            // Determinar o tipo de conta para exibição
+            let tipoDesc = '';
+            if (item.tipo === 'mae') {
+                tipoDesc = `(Conta-mãe - Grau ${item.conta.GRAU})`;
+            } else if (item.tipo === 'filha') {
+                tipoDesc = `(Conta-filha - Grau ${item.conta.GRAU})`;
+            } else {
+                tipoDesc = `(Subconta - Grau ${item.conta.GRAU})`;
+            }
+            
+            contaItem.innerHTML = `
                 <div class="conta-info">
                     <div>
-                        <span class="conta-codigo">${grupo.contaMae.CODIGO}</span>
-                        <span class="conta-nome">${grupo.contaMae.CONTA}</span>
-                        <span class="acesso-badge acesso-${grupo.contaMae.ACESSO}">${acessoDescMae}</span>
-                        <span style="font-size: 0.8rem; color: #666; margin-left: 10px;">(Conta-mãe - Grau ${grupo.contaMae.GRAU})</span>
+                        <span class="conta-codigo">${item.conta.CODIGO}</span>
+                        <span class="conta-nome">${item.conta.CONTA}</span>
+                        <span class="acesso-badge acesso-${item.conta.ACESSO}">${acessoDesc}</span>
+                        <span style="font-size: 0.8rem; color: #666; margin-left: 10px;">${tipoDesc}</span>
                     </div>
                     <div class="conta-detalhes">
-                        <span>Nível: <span class="nivel-indicator nivel-${grupo.contaMae.NIVEL}">${grupo.contaMae.NIVEL}</span></span>
-                        <span>Grau: ${grupo.contaMae.GRAU}</span>
-                        <span> | Conta Mãe: ${grupo.contaMae.CONTAMAE}</span>
+                        <span>Nível: <span class="nivel-indicator nivel-${item.conta.NIVEL}">${item.conta.NIVEL}</span></span>
+                        <span>Grau: ${item.conta.GRAU}</span>
+                        <span> | Conta Mãe: ${item.conta.CONTAMAE}</span>
                     </div>
                 </div>
-                ${mostrarBotoesMae ? `
+                ${mostrarBotoes ? `
                 <div class="conta-actions">
-                    <button class="btn btn-edit" data-id="${grupo.contaMae.CODIGO}">
+                    <button class="btn btn-edit" data-id="${item.conta.CODIGO}">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                             <path d="M12.146 2.146a.5.5 0 0 1 .708 0l1 1a.5.5 0 0 1 0 .708l-9 9a.5.5 0 0 1-.234.125l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .125-.234l9-9zM12.5 3.5l.5.5L12 5 11 4l.5-.5 1 1zM11 5L10 4 2 12l1 1 1-1 8-8z"/>
                         </svg>
                         Editar
                     </button>
-                    <button class="btn btn-delete" data-id="${grupo.contaMae.CODIGO}">
+                    <button class="btn btn-delete" data-id="${item.conta.CODIGO}">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                             <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
                             <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
@@ -188,58 +245,7 @@ function renderizarClasses(classes) {
                 ` : ''}
             `;
             
-            contasList.appendChild(contaMaeItem);
-            
-            // Renderizar contas-filhas (se houver)
-            if (grupo.contasFilhas.length > 0) {
-                grupo.contasFilhas.forEach((contaFilha, index) => {
-                    const contaFilhaItem = document.createElement('div');
-                    contaFilhaItem.className = 'conta-item';
-                    // Adicionar um recuo visual para indicar hierarquia
-                    contaFilhaItem.style.paddingLeft = '40px';
-                    contaFilhaItem.style.backgroundColor = '#f8f9fa';
-                    contaFilhaItem.style.borderLeft = '3px solid #ddd';
-                    
-                    // Determinar se mostra botões para conta-filha (só se ACESSO = "C")
-                    const mostrarBotoesFilha = contaFilha.ACESSO === 'C';
-                    const acessoDescFilha = contaFilha.ACESSO === 'C' ? 'Crédito' : 'Débito';
-                    
-                    contaFilhaItem.innerHTML = `
-                        <div class="conta-info">
-                            <div>
-                                <span class="conta-codigo">${contaFilha.CODIGO}</span>
-                                <span class="conta-nome">${contaFilha.CONTA}</span>
-                                <span class="acesso-badge acesso-${contaFilha.ACESSO}">${acessoDescFilha}</span>
-                                <span style="font-size: 0.8rem; color: #666; margin-left: 10px;">(Conta-filha ${index + 1} - Grau ${contaFilha.GRAU})</span>
-                            </div>
-                            <div class="conta-detalhes">
-                                <span>Nível: <span class="nivel-indicator nivel-${contaFilha.NIVEL}">${contaFilha.NIVEL}</span></span>
-                                <span>Grau: ${contaFilha.GRAU}</span>
-                                <span> | Conta Mãe: ${contaFilha.CONTAMAE}</span>
-                            </div>
-                        </div>
-                        ${mostrarBotoesFilha ? `
-                        <div class="conta-actions">
-                            <button class="btn btn-edit" data-id="${contaFilha.CODIGO}">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                    <path d="M12.146 2.146a.5.5 0 0 1 .708 0l1 1a.5.5 0 0 1 0 .708l-9 9a.5.5 0 0 1-.234.125l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .125-.234l9-9zM12.5 3.5l.5.5L12 5 11 4l.5-.5 1 1zM11 5L10 4 2 12l1 1 1-1 8-8z"/>
-                                </svg>
-                                Editar
-                            </button>
-                            <button class="btn btn-delete" data-id="${contaFilha.CODIGO}">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                                </svg>
-                                Excluir
-                            </button>
-                        </div>
-                        ` : ''}
-                    `;
-                    
-                    contasList.appendChild(contaFilhaItem);
-                });
-            }
+            contasList.appendChild(contaItem);
         });
         
         // Montar a classe

@@ -151,8 +151,19 @@ function renderizarClasses(classes) {
             
             // Determinar se mostra botões (só se ACESSO = "CC")
             const mostrarBotoes = item.conta.ACESSO === 'CC';
-            const acessoDesc = item.conta.ACESSO === 'CC' ? 'Crédito' : 'Débito';
-            const acessoClasse = item.conta.ACESSO === 'CC' ? 'C' : item.conta.ACESSO;
+            
+            // Determinar texto e classe do badge
+            let acessoDesc, acessoClasse;
+            if (item.conta.ACESSO === 'CC' || item.conta.ACESSO === 'C') {
+                acessoDesc = 'Crédito';
+                acessoClasse = 'C';
+            } else if (item.conta.ACESSO === 'N') {
+                acessoDesc = 'Débito';
+                acessoClasse = 'N';
+            } else {
+                acessoDesc = item.conta.ACESSO;
+                acessoClasse = item.conta.ACESSO;
+            }
             
             let tipoDesc = '';
             
@@ -388,7 +399,7 @@ function salvarConta() {
     } else {
         const novaConta = {
             NIVEL: "1",
-            ACESSO: "CC",
+            ACESSO: "CC", // ACESSO sempre "CC" para novas contas
             CLASSE: codigo.charAt(0),
             CONTA: conta,
             CONTAMAE: conta,
@@ -491,7 +502,7 @@ function adicionarSubconta() {
     // Usar os dados da conta clicada: nível, acesso sempre "CC", grau sempre "3+"
     const novaSubconta = {
         NIVEL: contaPaiParaAdd.NIVEL, // Nível da conta clicada
-        ACESSO: "CC", // Sempre "CC" (corrigido de "C" para "CC")
+        ACESSO: "CC", // Sempre "CC"
         CLASSE: contaPaiParaAdd.CLASSE,
         CONTA: conta,
         CONTAMAE: contaPaiParaAdd.CONTA, // A conta mãe é a conta clicada
@@ -592,15 +603,6 @@ fetch('pgc.json')
     })
     .then(data => {
         if (!Array.isArray(data)) throw new Error('O arquivo JSON não contém um array de dados');
-        
-        // Converter "C" para "CC" para manter compatibilidade
-        data = data.map(conta => {
-            if (conta.ACESSO === 'C') {
-                conta.ACESSO = 'CC';
-            }
-            return conta;
-        });
-        
         renderPGC(data);
     })
     .catch(err => {

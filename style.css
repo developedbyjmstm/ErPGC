@@ -1,25 +1,224 @@
-body {
-    font-family: "Courier New", Courier, monospace;
-    background-color: #0D1B2A; /* fundo escuro parecido com app */
-    color: #FFFFFF;
-    padding: 10px;
-  }
-  .separator {
-    border-bottom: 1px solid #444;
-    margin: 6px 0;
-  }
-  .item {
-    margin: 2px 0;
-  }
-  /* indentação por GRAU */
-  .nivel-0 { margin-left: 0px; font-size: 12.5px; color: #E040FB; } /* magenta */
-  .nivel-1 { margin-left: 20px; font-size: 11px; }
-  .nivel-2 { margin-left: 40px; font-size: 11px; }
-  .nivel-3 { margin-left: 60px; font-size: 11px; }
-  .nivel-4 { margin-left: 100px; font-size: 11px; }
-  .nivel-5 { margin-left: 140px; font-size: 11px; }
-  .nivel-6 { margin-left: 180px; font-size: 11px; }
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-  /* cores de acesso */
-  .acesso-C { color: #00E676; } /* verde */
-  .acesso-N { color: #FF3D00; } /* vermelho */
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 25px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #4a6fa5;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .classe-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .classe-header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .classe-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .classe-info {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .contas-list {
+            padding: 0;
+        }
+
+        .conta-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+
+        .conta-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .conta-item:last-child {
+            border-bottom: none;
+        }
+
+        .conta-info {
+            flex-grow: 1;
+        }
+
+        .conta-codigo {
+            display: inline-block;
+            background-color: #e8f4fd;
+            color: #2980b9;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-right: 10px;
+            min-width: 70px;
+        }
+
+        .conta-nome {
+            font-size: 1.05rem;
+            color: #2c3e50;
+        }
+
+        .conta-detalhes {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .conta-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn-edit {
+            background-color: #f1c40f;
+            color: #333;
+        }
+
+        .btn-edit:hover {
+            background-color: #f39c12;
+        }
+
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+
+        .nivel-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 0.8rem;
+            margin-right: 10px;
+            color: white;
+        }
+
+        .nivel-0 { background-color: #2c3e50; }
+        .nivel-1 { background-color: #3498db; }
+        .nivel-2 { background-color: #27ae60; }
+        .nivel-3 { background-color: #9b59b6; }
+
+        .acesso-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .acesso-C { background-color: #d4edda; color: #155724; }
+        .acesso-N { background-color: #f8d7da; color: #721c24; }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .filter-container {
+            margin-bottom: 20px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-input {
+            padding: 10px 15px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .conta-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .conta-actions {
+                margin-top: 10px;
+                align-self: flex-end;
+            }
+            
+            .conta-info {
+                width: 100%;
+            }
+        }

@@ -409,18 +409,17 @@ function mostrarErro(mensagem) {
 }
 
 // Funções para o diálogo de adição de subconta
-function abrirAddSubcontaDialog(contaPai) {
-    contaPaiParaAdd = contaPai;
-    document.getElementById('addSubcontaDialogTitle').textContent = `Adicionar Subconta a ${contaPai.CONTA}`;
-    const proximoCodigo = sugerirProximoCodigo(contaPai.CODIGO);
+function abrirAddSubcontaDialog(contaClicada) {
+    contaPaiParaAdd = contaClicada;
+    
+    // Usar a conta mãe da conta clicada no título
+    const contaMae = contaClicada.CONTAMAE || contaClicada.CONTA;
+    document.getElementById('addSubcontaDialogTitle').textContent = `Adicionar Subconta a ${contaMae}`;
+    
+    const proximoCodigo = sugerirProximoCodigo(contaClicada.CODIGO);
     document.getElementById('addCodigo').value = proximoCodigo;
     const codigoFormatado = formatarCodigoComPontos(proximoCodigo);
     document.getElementById('addConta').value = codigoFormatado + '-';
-    const nivelPai = parseInt(contaPai.NIVEL) || 0;
-    document.getElementById('addNivel').value = (nivelPai + 1).toString();
-    document.getElementById('addAcesso').value = 'C';
-    const grauPai = contaPai.GRAU;
-    document.getElementById('addGrau').value = grauPai === '2' ? '3' : '3+';
     document.getElementById('addDialogErrors').style.display = 'none';
     document.getElementById('addDialogErrors').textContent = '';
     
@@ -440,17 +439,14 @@ function fecharAddSubcontaDialog() {
     contaPaiParaAdd = null;
     document.getElementById('addCodigo').value = '';
     document.getElementById('addConta').value = '';
-    document.getElementById('addNivel').value = '1';
-    document.getElementById('addAcesso').value = 'C';
-    document.getElementById('addGrau').value = '3';
     document.getElementById('addDialogErrors').style.display = 'none';
     document.getElementById('addDialogErrors').textContent = '';
 }
 
-function validarSubconta(codigo, conta, contaPai) {
+function validarSubconta(codigo, conta, contaClicada) {
     const errors = [];
-    if (!codigo.startsWith(contaPai.CODIGO)) errors.push(`O código deve começar com ${contaPai.CODIGO} (código da conta pai).`);
-    if (codigo.length <= contaPai.CODIGO.length) errors.push(`O código deve ter mais dígitos que o código pai (${contaPai.CODIGO}).`);
+    if (!codigo.startsWith(contaClicada.CODIGO)) errors.push(`O código deve começar com ${contaClicada.CODIGO} (código da conta clicada).`);
+    if (codigo.length <= contaClicada.CODIGO.length) errors.push(`O código deve ter mais dígitos que o código da conta clicada (${contaClicada.CODIGO}).`);
     if (!/^\d+$/.test(codigo)) errors.push('O código deve conter apenas números.');
     if (!conta.includes('-')) errors.push('A conta deve estar no formato: código-nome (ex: 1.2.1.1.1-Nova Subconta)');
     const codigoDaConta = conta.split('-')[0];
@@ -471,9 +467,6 @@ function verificarSubcontaExistente(codigo, conta) {
 function adicionarSubconta() {
     const codigo = document.getElementById('addCodigo').value.trim();
     const conta = document.getElementById('addConta').value.trim();
-    const nivel = document.getElementById('addNivel').value;
-    const acesso = document.getElementById('addAcesso').value;
-    const grau = document.getElementById('addGrau').value;
     
     if (!codigo || !conta) {
         mostrarErroAdd('Código e conta são obrigatórios.');
@@ -492,15 +485,17 @@ function adicionarSubconta() {
         return;
     }
     
+    // Usar os dados da conta clicada: nível, acesso sempre "C", grau sempre "3+"
+    // A conta mãe é a conta clicada
     const novaSubconta = {
-        NIVEL: nivel,
-        ACESSO: acesso,
+        NIVEL: contaPaiParaAdd.NIVEL, // Nível da conta clicada
+        ACESSO: "C", // Sempre "C"
         CLASSE: contaPaiParaAdd.CLASSE,
         CONTA: conta,
-        CONTAMAE: contaPaiParaAdd.CONTA,
+        CONTAMAE: contaPaiParaAdd.CONTA, // A conta mãe é a conta clicada
         CODIGO: codigo,
-        GRAU: grau,
-        CODIGOMAE: contaPaiParaAdd.CODIGO
+        GRAU: "3+", // Sempre "3+"
+        CODIGOMAE: contaPaiParaAdd.CODIGO // O código mãe é o código da conta clicada
     };
     
     dadosPGC.push(novaSubconta);

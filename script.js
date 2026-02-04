@@ -183,7 +183,7 @@ function renderizarClasses(classes) {
                         <span class="acesso-badge acesso-${acessoClasse}">${acessoDesc}</span>
                         <span style="font-size: 0.8rem; color: #666; margin-left: 10px;">${tipoDesc}</span>
                     </div>
-                    <div class="conta-detalhes">
+                    <div class="conta-detalhes" style="display: none;">
                         <span>Nível: <span class="nivel-indicator nivel-${item.conta.NIVEL}">${item.conta.NIVEL}</span></span>
                         <span>Grau: ${item.conta.GRAU}</span>
                         <span> | Conta Mãe: ${item.conta.CONTAMAE}</span>
